@@ -29,13 +29,22 @@ export function resolveHydratedTaskViewState(args: {
   visibleProviders: TaskProvider[]
 }): HydratedTaskViewState {
   const { settings, resume, requestedTaskSource, visibleProviders } = args
-  const provider =
+  const selected =
     requestedTaskSource && visibleProviders.includes(requestedTaskSource)
       ? requestedTaskSource
       : resolveVisibleTaskProvider(
           isTaskProvider(settings.defaultTaskSource) ? settings.defaultTaskSource : undefined,
           visibleProviders
         )
+  // Lark tasks are received on the desktop. Keep the phone on a provider it can load.
+  const desktopProviders = visibleProviders.filter((entry) => entry !== 'lark')
+  const provider =
+    selected === 'lark'
+      ? resolveVisibleTaskProvider(
+          desktopProviders[0],
+          desktopProviders.length > 0 ? desktopProviders : ['github']
+        )
+      : selected
   // A cleared preset preserves the typed query; an absent preset uses the host default.
   const githubPreset =
     resume.githubItemsPreset === null

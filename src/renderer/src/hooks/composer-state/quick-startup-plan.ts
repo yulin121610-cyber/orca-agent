@@ -128,6 +128,8 @@ export async function prepareQuickComposerStartup(
     executionHostId: ComposerModel['selectedRepoExecutionHostId']
     linkedWorkItem: Parameters<typeof resolveQuickCreateLinkedWorkItemPrompt>[0]
     note: string
+    /** Reviewable draft supplied by the opener. Linked-item drafts still win. */
+    explicitDraft?: string
   }
 ): Promise<QuickComposerStartup & { prompt: string; draftPrompt: string | null }> {
   const preferences = input.agent
@@ -137,10 +139,13 @@ export async function prepareQuickComposerStartup(
         executionHostId: input.executionHostId ?? undefined
       })
     : undefined
-  const { prompt, draftPrompt } = resolveQuickCreateLinkedWorkItemPrompt(
+  const resolved = resolveQuickCreateLinkedWorkItemPrompt(
     input.agent ? input.linkedWorkItem : null,
     input.note
   )
+  const explicitDraft = input.explicitDraft?.trim() ?? ''
+  const draftPrompt = resolved.draftPrompt ?? (explicitDraft || null)
+  const prompt = resolved.draftPrompt ? resolved.prompt : explicitDraft ? '' : resolved.prompt
   return {
     prompt,
     draftPrompt,

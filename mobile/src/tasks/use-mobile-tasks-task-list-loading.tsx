@@ -97,6 +97,10 @@ export function useMobileTasksTaskListLoading(model: ProviderLoadActionsModel) {
         // Jira/Linear need repos only for workspace creation, not issue reads.
         const repoListRequest = repoListEnsureLoaded()
         void repoListRequest.catch(() => {})
+        if (provider === 'lark') {
+          setItems([])
+          return
+        }
         if (provider === 'jira') {
           if (!jiraConnection.connected) {
             setItems([])

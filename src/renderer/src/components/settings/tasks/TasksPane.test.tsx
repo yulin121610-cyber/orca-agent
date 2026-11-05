@@ -136,7 +136,8 @@ describe('TasksPane', () => {
         skillChecking: false,
         visible: true
       },
-      jira: { connected: false, checking: false, visible: false }
+      jira: { connected: false, checking: false, visible: false },
+      lark: { connected: false, checking: true, visible: true }
     }
   })
 
@@ -174,6 +175,7 @@ describe('TasksPane', () => {
       visible: true
     }
     mocks.readiness.jira = { connected: false, checking: false, visible: true }
+    mocks.readiness.lark = { connected: false, checking: false, visible: true }
 
     const markup = renderPane()
 

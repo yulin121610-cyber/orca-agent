@@ -17,6 +17,7 @@ import { resolveAgentSessionLaunchRoute } from '@/lib/agent-session-launch-plan'
 
 export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
   const {
+    agentPrompt,
     clearNewWorkspaceDraft,
     createMultiple,
     effectivePresetId,
@@ -92,8 +93,12 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
 
       const promptLinkedWorkItem = agent === null ? null : submitLinkedWorkItem
 
-      const { prompt: quickPrompt, draftPrompt: quickDraftPrompt } =
+      const { prompt: resolvedPrompt, draftPrompt: resolvedDraft } =
         resolveQuickCreateLinkedWorkItemPrompt(promptLinkedWorkItem, trimmedNote)
+      // An explicit draft (Lark triage) is pasted for review. Linked-item drafts keep their own path.
+      const explicitDraft = agentPrompt.trim()
+      const quickDraftPrompt = resolvedDraft ?? (explicitDraft || null)
+      const quickPrompt = resolvedDraft ? resolvedPrompt : explicitDraft ? '' : resolvedPrompt
 
       const startupPolicySettlement = await settleComposerSubmit(
         persistSetupAgentStartupPolicy(),
@@ -152,6 +157,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         agent,
         linkedWorkItem: submitLinkedWorkItem,
         note: trimmedNote,
+        explicitDraft: agentPrompt,
         repoId,
         executionHostId: selectedRepoExecutionHostId,
         settings,
@@ -259,6 +265,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       }
     },
     [
+      agentPrompt,
       clearNewWorkspaceDraft,
       createMultiple,
       effectivePresetId,

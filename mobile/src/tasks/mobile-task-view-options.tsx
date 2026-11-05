@@ -8,7 +8,8 @@ export const PROVIDER_LABELS: Record<TaskProvider, string> = {
   github: 'GitHub',
   gitlab: 'GitLab',
   linear: 'Linear',
-  jira: 'Jira'
+  jira: 'Jira',
+  lark: 'Lark'
 }
 
 export const PROVIDER_EMPTY_LABELS: Record<TaskProvider, string> = {
@@ -23,6 +24,9 @@ export const PROVIDER_EMPTY_LABELS: Record<TaskProvider, string> = {
   },
   get jira() {
     return translate('tasks.taskViewOptions.noJiraTasks', 'No Jira tasks')
+  },
+  get lark() {
+    return translate('tasks.taskViewOptions.noLarkTasks', 'No Lark tasks')
   }
 }
 

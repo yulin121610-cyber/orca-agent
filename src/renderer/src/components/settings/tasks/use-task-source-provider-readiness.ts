@@ -1,4 +1,4 @@
-import { useMemo } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import type { TaskProvider } from '../../../../../shared/task-providers'
 import {
   GLOBAL_AGENT_SKILL_SOURCE_KINDS,
@@ -63,6 +63,42 @@ export function useTaskSourceProviderReadiness(
     linearStatusContextKey !== providerRuntimeContextKey || !linearStatusChecked
   // Normalization returns a new array, so memoize by provider contents.
   const visibleProvidersKey = visibleProviders.join(',')
+  const [larkConnected, setLarkConnected] = useState(false)
+  const [larkChecking, setLarkChecking] = useState(true)
+
+  useEffect(() => {
+    const lark = window.api?.lark
+    if (!lark) {
+      setLarkChecking(false)
+      return
+    }
+    let cancelled = false
+    const apply = (): void => {
+      void lark
+        .snapshot()
+        .then((snapshot) => {
+          if (cancelled) {
+            return
+          }
+          setLarkChecking(snapshot.state === 'starting')
+          setLarkConnected(
+            Boolean(snapshot.config?.enabled && snapshot.identity && snapshot.state !== 'error')
+          )
+        })
+        .catch(() => {
+          if (!cancelled) {
+            setLarkChecking(false)
+            setLarkConnected(false)
+          }
+        })
+    }
+    apply()
+    const unsubscribe = lark.onTasksChanged(apply)
+    return () => {
+      cancelled = true
+      unsubscribe()
+    }
+  }, [])
 
   return useMemo(() => {
     const visible = new Set(visibleProvidersKey.split(',') as TaskProvider[])
@@ -91,6 +127,11 @@ export function useTaskSourceProviderReadiness(
         connected: jiraConnected,
         checking: jiraChecking,
         visible: visible.has('jira')
+      },
+      lark: {
+        connected: larkConnected,
+        checking: larkChecking,
+        visible: visible.has('lark')
       }
     }
   }, [
@@ -104,6 +145,8 @@ export function useTaskSourceProviderReadiness(
     linearSkillLoading,
     linearSkillSettled,
     linearSkillUnverifiable,
+    larkChecking,
+    larkConnected,
     reviewChecking,
     reviewUnavailable,
     visibleProvidersKey

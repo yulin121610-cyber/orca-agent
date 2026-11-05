@@ -53,6 +53,7 @@ it('carries the accepted route across preparation and retains CLI startup/prompt
   const prepare = vi.fn<() => Promise<PreparedQuickSubmit | null>>()
   const { result } = renderHook(() =>
     useQuickCreationExecution({
+      agentPrompt: '',
       clearNewWorkspaceDraft: vi.fn(),
       createMultiple: false,
       effectivePresetId: null,

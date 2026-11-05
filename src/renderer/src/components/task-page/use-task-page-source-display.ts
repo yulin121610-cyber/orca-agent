@@ -62,6 +62,15 @@ export function useTaskPageSourceDisplay<Model extends TaskPageSourceDisplayInpu
         jiraSiteName
       })
     }
+    if (taskSource === 'lark') {
+      return getTaskSourceContextSummary({
+        provider: taskSource,
+        providerLabel,
+        hostAvailability: accountBackedTaskSourceHostAvailability,
+        accountHostId: accountBackedTaskSourceHostId,
+        hostLabelById
+      })
+    }
     return getTaskSourceContextSummary({
       provider: taskSource,
       providerLabel,

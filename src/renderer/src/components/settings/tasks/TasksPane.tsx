@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Github, Gitlab } from 'lucide-react'
+import { Bot, Github, Gitlab } from 'lucide-react'
 import type { GlobalSettings } from '../../../../../shared/global-settings-types'
 
 import {
@@ -15,6 +15,7 @@ import { useAppStore } from '@/store/index'
 import { SearchableSetting } from '../section-layout/SearchableSetting'
 import { SettingsSubsectionHeader } from '../form-controls/SettingsFormControls'
 import { CodeHostSetupSteps, JiraSetupSteps } from './TaskSourceSimpleSetup'
+import { TaskSourceLarkSetup } from './TaskSourceLarkSetup'
 import { TaskSourceLinearSetup } from './TaskSourceLinearSetup'
 import { TaskSourceProviderCard } from './TaskSourceProviderCard'
 import {
@@ -90,6 +91,18 @@ const PROVIDER_META: Record<
       )
     },
     Icon: ({ className }) => <JiraIcon className={className} />
+  },
+  lark: {
+    get label() {
+      return translate('settings.tasks.lark.name', 'Lark')
+    },
+    get description() {
+      return translate(
+        'settings.tasks.lark.cardDescription',
+        'Connect a bot-only Lark CLI and show group tasks in Tasks.'
+      )
+    },
+    Icon: ({ className }) => <Bot className={className} />
   }
 }
 
@@ -222,6 +235,14 @@ export function TasksPane({ settings, updateSettings }: TasksPaneProps): React.J
                     onToggleVisible={() => toggleProvider('jira')}
                     onConnected={() => void checkJiraConnection()}
                     onOpenIntegrations={() => openIntegrations(JIRA_INTEGRATION_SECTION_ID)}
+                  />
+                ) : provider === 'lark' ? (
+                  <TaskSourceLarkSetup
+                    connected={readiness.connected}
+                    checking={readiness.checking}
+                    visible={visible}
+                    canHide={canHide}
+                    onToggleVisible={() => toggleProvider('lark')}
                   />
                 ) : (
                   <CodeHostSetupSteps

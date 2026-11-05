@@ -56,6 +56,8 @@ const HostedAddRepoDialog = lazyWithRetry(
 type ComposerModalData = {
   directSetup?: DirectWorkItemSetupRequest
   prefilledName?: string
+  /** Pasted into the agent as a reviewable draft. Empty for every opener except Lark tasks. */
+  launchDraftPrompt?: string
   initialRepoId?: string
   initialEphemeralVmRecipeId?: string
   initialProjectGroupId?: string
@@ -156,8 +158,8 @@ function QuickTabBody({
     selectAddedProjectGroup
   } = useComposerState({
     initialName: modalData.prefilledName ?? '',
-    // Quick create ignores legacy prompt-prefill payloads.
-    initialPrompt: '',
+    // Only Lark start-work supplies a draft. Other openers stay blank so legacy prompt payloads stay ignored.
+    initialPrompt: modalData.launchDraftPrompt ?? '',
     initialLinkedWorkItem: modalData.linkedWorkItem ?? null,
     initialGitHubWorkItem: modalData.initialGitHubWorkItem ?? null,
     initialTaskSourceContext: modalData.taskSourceContext ?? null,

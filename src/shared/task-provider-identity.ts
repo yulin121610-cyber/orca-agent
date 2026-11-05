@@ -29,11 +29,18 @@ export type JiraTaskProviderIdentity = {
   projectKey?: string | null
 }
 
+export type LarkTaskProviderIdentity = {
+  provider: 'lark'
+  appId?: string | null
+  chatId?: string | null
+}
+
 export type TaskProviderIdentity =
   | GitHubTaskProviderIdentity
   | GitLabTaskProviderIdentity
   | LinearTaskProviderIdentity
   | JiraTaskProviderIdentity
+  | LarkTaskProviderIdentity
 
 export function normalizeTaskProviderIdentity(
   provider: TaskProvider,
@@ -79,6 +86,12 @@ export function normalizeTaskProviderIdentity(
         siteUrl: normalizeNonEmptyString(raw.siteUrl),
         projectKey: normalizeNonEmptyString(raw.projectKey)
       }
+    case 'lark':
+      return {
+        provider,
+        appId: normalizeNonEmptyString(raw.appId),
+        chatId: normalizeNonEmptyString(raw.chatId)
+      }
   }
 }
 
@@ -112,6 +125,8 @@ export function isStoredTaskProviderIdentity(provider: TaskProvider, identity: u
       )
     case 'jira':
       return ['siteId', 'siteUrl', 'projectKey'].every((key) => isNullableOptionalString(raw[key]))
+    case 'lark':
+      return ['appId', 'chatId'].every((key) => isNullableOptionalString(raw[key]))
   }
 }
 
@@ -119,7 +134,8 @@ const TASK_PROVIDER_IDENTITY_FIELDS: Record<TaskProvider, readonly string[]> = {
   github: ['owner', 'repo', 'host'],
   gitlab: ['projectId', 'namespace', 'project', 'webUrl'],
   linear: ['workspaceId', 'workspaceName', 'teamId', 'teamKey'],
-  jira: ['siteId', 'siteUrl', 'projectKey']
+  jira: ['siteId', 'siteUrl', 'projectKey'],
+  lark: ['appId', 'chatId']
 }
 
 export function areTaskProviderIdentitiesEqual(
@@ -157,6 +173,8 @@ export function taskProviderIdentityCachePart(
       return [identity.workspaceId, identity.teamId ?? identity.teamKey].filter(Boolean).join('/')
     case 'jira':
       return [identity.siteId ?? identity.siteUrl, identity.projectKey].filter(Boolean).join('/')
+    case 'lark':
+      return [identity.appId, identity.chatId].filter(Boolean).join('/')
   }
 }
 

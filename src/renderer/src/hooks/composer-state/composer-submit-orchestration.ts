@@ -92,6 +92,7 @@ export function useComposerSubmitOrchestration(
     smartNameMode: target.workspaceIdentityState.smartNameMode
   })
   const quickCreationExecution = useQuickCreationExecution({
+    agentPrompt: target.sourceContextState.agentPrompt,
     clearNewWorkspaceDraft: target.composerTargetStore.clearNewWorkspaceDraft,
     createMultiple: target.asyncComposerState.createMultiple,
     effectivePresetId: target.derivedComposerState.effectivePresetId,
