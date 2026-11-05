@@ -6,6 +6,14 @@ export const LARK_TASK_MAX_BYTES = 240 * 1024
 export const LARK_TASK_DESCRIPTION_MAX = 180_000
 export const LARK_TASK_MESSAGE_ID_LIMIT = 2000
 
+export type LarkTaskDelivery = {
+  worktreeId: string
+  replyMessageId: string
+  ackSent?: boolean
+  resultSent?: boolean
+  withdrawn?: boolean
+}
+
 export type LarkTask = {
   id: string
   sourceKey: string
@@ -19,7 +27,10 @@ export type LarkTask = {
     chatId: string
     rootId: string
     messageIds: string[]
+    senderId?: string
   }
+  /** Set when Start work creates a workspace, so a later restart can still reply. */
+  delivery?: LarkTaskDelivery
 }
 
 export type LarkTaskIngestResult =
@@ -134,7 +145,8 @@ export function ingestLarkBotEvent(args: {
       appId: identity.appId,
       chatId: event.chat_id,
       rootId,
-      messageIds: [event.message_id]
+      messageIds: [event.message_id],
+      senderId: event.sender_id
     }
   }
   if (taskBytes(task) > LARK_TASK_MAX_BYTES) {

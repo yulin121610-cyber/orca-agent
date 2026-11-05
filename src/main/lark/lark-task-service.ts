@@ -6,7 +6,14 @@ import {
   type LarkSaveResult,
   type LarkSourceSnapshot
 } from '../../shared/lark/lark-snapshot'
-import { openLarkEventSession, resolveLarkBot } from './lark-bot-cli'
+import { openLarkEventSession, postLarkThreadReply, resolveLarkBot } from './lark-bot-cli'
+import {
+  buildLarkImReply,
+  larkReplyIdempotencyKey,
+  larkTaskMayReply,
+  type LarkReplyKind,
+  type LarkReplyOutcome
+} from '../../shared/lark/lark-thread-reply'
 import { LarkBotListener } from './lark-bot-listener'
 import { LarkTaskFileStore } from './lark-task-file-store'
 
@@ -18,15 +25,28 @@ function broadcastTasksChanged(): void {
   }
 }
 
+export type LarkTurnNote = {
+  worktreeId: string
+  kind: LarkReplyKind
+  outcome?: LarkReplyOutcome
+  detail?: string
+}
+
 export type LarkTaskService = {
   start: () => Promise<void>
   snapshot: () => LarkSourceSnapshot
   saveConfig: (raw: unknown) => Promise<LarkSaveResult>
+  bindWorkspace: (
+    taskId: string,
+    worktreeId: string
+  ) => Promise<{ ok: true } | { ok: false; error: string }>
+  noteTurn: (note: LarkTurnNote) => Promise<void>
   shutdown: () => Promise<void>
 }
 
 export function createLarkTaskService(filePath: string): LarkTaskService {
   const store = new LarkTaskFileStore(filePath)
+  const replyInflight = new Set<string>()
   const listener = new LarkBotListener(
     store,
     { resolveIdentity: resolveLarkBot, openEvents: openLarkEventSession },
@@ -72,8 +92,84 @@ export function createLarkTaskService(filePath: string): LarkTaskService {
         return { ok: false, error: configError(error) }
       }
     },
+    async bindWorkspace(taskId, worktreeId) {
+      if (
+        typeof taskId !== 'string' ||
+        typeof worktreeId !== 'string' ||
+        !isWorkspaceId(worktreeId)
+      ) {
+        return { ok: false, error: 'That Lark task could not be linked to a workspace.' }
+      }
+      try {
+        await store.load()
+      } catch {
+        return { ok: false, error: 'Lark task storage could not be read.' }
+      }
+      const bound = await store.bindWorkspace(taskId, worktreeId)
+      if (bound === 'bound') {
+        return { ok: true }
+      }
+      return {
+        ok: false,
+        error:
+          bound === 'missing'
+            ? 'That Lark task is no longer available.'
+            : 'This Lark task is not from an allowed group or sender.'
+      }
+    },
+    async noteTurn(note) {
+      const task = store.taskForWorktree(note.worktreeId)
+      const delivery = task?.delivery
+      if (!task || !delivery || delivery.withdrawn) {
+        return
+      }
+      if (note.kind === 'ack' && delivery.ackSent) {
+        return
+      }
+      if (note.kind === 'result' && delivery.resultSent) {
+        return
+      }
+      const config = store.getConfig()
+      if (!larkTaskMayReply(task, config) || !config) {
+        return
+      }
+      const idempotencyKey = larkReplyIdempotencyKey(note.kind, task.id)
+      if (replyInflight.has(idempotencyKey)) {
+        return
+      }
+      replyInflight.add(idempotencyKey)
+      try {
+        const posted = await postLarkThreadReply({
+          program: config.cliPath,
+          messageId: delivery.replyMessageId,
+          markdown: buildLarkImReply({
+            kind: note.kind,
+            title: task.title,
+            outcome: note.outcome,
+            detail: note.detail
+          }),
+          idempotencyKey
+        })
+        if (posted.status === 'sent') {
+          await store.markDelivery(
+            task.id,
+            note.kind === 'ack' ? { ackSent: true } : { resultSent: true }
+          )
+        } else if (posted.status === 'withdrawn') {
+          await store.markDelivery(task.id, { withdrawn: true })
+        }
+      } catch {
+        // A failed CLI check can be retried on the next real turn. Do not surface argv or output.
+      } finally {
+        replyInflight.delete(idempotencyKey)
+      }
+    },
     shutdown: () => listener.shutdown()
   }
+}
+
+function isWorkspaceId(value: string): boolean {
+  return value.length > 0 && value.length <= 256 && !/[\r\n\0]/.test(value)
 }
 
 function configError(error: unknown): string {

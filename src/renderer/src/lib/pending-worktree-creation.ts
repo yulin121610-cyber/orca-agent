@@ -111,6 +111,8 @@ export type WorktreeCreationRequest = {
   /** Launch context delivered only as an unsent TUI-input draft (argv prefill or
    *  startup paste); completion seeds the chat-composer copy from it. */
   launchDraftPrompt?: string
+  /** Lark task whose thread should receive start and completion replies. */
+  larkTaskId?: string
   // Composer fixes launchDraftPrompt/quickPrompt delivery beside agentLaunchRoute; never rederive it later.
   promptDelivery?: 'draft' | 'auto-submit'
   quickTelemetry: AgentStartedTelemetry | null

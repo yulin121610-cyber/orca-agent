@@ -8,6 +8,7 @@ import type { DirectWorkItemSetupRequest } from '@/lib/direct-work-item-setup'
 import { agentChoicePending } from '@/lib/host-chat-program'
 import type { AgentLaunchSurface } from '@/lib/agent-session-launch-plan'
 import React, { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { clearLarkTaskStart } from '@/lib/lark-task-start'
 import { useAppStore } from '@/store'
 import { lazyWithRetry } from '@/lib/lazy-with-retry'
 import {
@@ -103,6 +104,7 @@ function ComposerModalBody({
   const submitCancelledRef = useRef(false)
   const handleDismiss = useCallback(() => {
     submitCancelledRef.current = true
+    clearLarkTaskStart()
     onClose()
   }, [onClose])
   const isSubmissionCancelled = useCallback(() => submitCancelledRef.current, [])

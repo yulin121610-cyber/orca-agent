@@ -200,7 +200,7 @@ export function registerCoreHandlers(
   registerGitHubHandlers(store, stats)
   registerGitLabHandlers(store)
   registerHostedReviewHandlers(store, stats)
-  registerTaskSourceHandlers(store, commitMessageAgentEnv)
+  registerTaskSourceHandlers(store, commitMessageAgentEnv, runtime.agentTransitions)
   registerBitbucketHandlers()
   registerFeedbackHandlers()
   if (crashReports) {

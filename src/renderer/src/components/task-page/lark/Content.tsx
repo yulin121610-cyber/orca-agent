@@ -9,6 +9,7 @@ import {
 } from '../../../../../shared/lark/lark-task-draft'
 import type { LarkTask } from '../../../../../shared/lark/lark-task'
 import type { LarkSourceSnapshot } from '../../../../../shared/lark/lark-snapshot'
+import { armLarkTaskStart } from '@/lib/lark-task-start'
 import { useAppStore } from '@/store'
 
 export function TaskPageLarkContent(): React.JSX.Element {
@@ -102,6 +103,7 @@ export function TaskPageLarkContent(): React.JSX.Element {
         task={selected}
         onBack={() => setSelectedId(null)}
         onStart={() => {
+          armLarkTaskStart(task.id)
           openModal('new-workspace-composer', {
             prefilledName: larkTaskWorkspaceSeed(selected.title),
             launchDraftPrompt: buildLarkTaskLaunchDraft(selected),

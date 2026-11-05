@@ -13,6 +13,7 @@ import {
   type LarkTask,
   type LarkTaskIngestResult
 } from '../../shared/lark/lark-task'
+import { larkTaskMayReply } from '../../shared/lark/lark-thread-reply'
 
 type PersistedLarkTasks = {
   config: LarkBotConfig | null
@@ -93,6 +94,50 @@ export class LarkTaskFileStore {
         config: larkBotConfigSchema.parse(config),
         identity
       }
+      await this.persist()
+    })
+  }
+
+  taskForWorktree(worktreeId: string): LarkTask | null {
+    const task = this.state.tasks.find((entry) => entry.delivery?.worktreeId === worktreeId)
+    return task ? structuredClone(task) : null
+  }
+
+  bindWorkspace(taskId: string, worktreeId: string): Promise<'bound' | 'missing' | 'rejected'> {
+    return this.serialize(async () => {
+      const task = this.state.tasks.find((entry) => entry.id === taskId)
+      if (!task) {
+        return 'missing'
+      }
+      if (!larkTaskMayReply(task, this.state.config)) {
+        return 'rejected'
+      }
+      task.delivery = {
+        worktreeId,
+        replyMessageId: task.bot.rootId,
+        ...(task.delivery?.worktreeId === worktreeId
+          ? {
+              ...(task.delivery.ackSent ? { ackSent: true } : {}),
+              ...(task.delivery.resultSent ? { resultSent: true } : {}),
+              ...(task.delivery.withdrawn ? { withdrawn: true } : {})
+            }
+          : {})
+      }
+      await this.persist()
+      return 'bound'
+    })
+  }
+
+  markDelivery(
+    taskId: string,
+    patch: { ackSent?: boolean; resultSent?: boolean; withdrawn?: boolean }
+  ): Promise<void> {
+    return this.serialize(async () => {
+      const task = this.state.tasks.find((entry) => entry.id === taskId)
+      if (!task?.delivery) {
+        return
+      }
+      task.delivery = { ...task.delivery, ...patch }
       await this.persist()
     })
   }

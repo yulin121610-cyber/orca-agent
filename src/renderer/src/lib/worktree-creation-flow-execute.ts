@@ -1,3 +1,4 @@
+import { bindLarkTaskWorkspace } from '@/lib/lark-task-start'
 import { prepareWorktreeCreationHooks } from '@/lib/worktree-creation-hook-preparation'
 import { useAppStore } from '@/store'
 import { activateAndRevealWorktree, type ActivateAndRevealResult } from '@/lib/worktree-activation'
@@ -144,6 +145,7 @@ export async function executeWorktreeCreation(
     }
     return
   }
+  await bindLarkTaskWorkspace(preparedRequest.larkTaskId, worktree.id)
   await attachEphemeralVmRuntimeToWorkspace(preparedRequest, worktree.id)
 
   const backendSpawned = result.startupTerminal?.spawned === true

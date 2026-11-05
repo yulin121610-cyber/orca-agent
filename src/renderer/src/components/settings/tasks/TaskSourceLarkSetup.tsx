@@ -112,7 +112,7 @@ export function TaskSourceLarkSetup(props: TaskSourceLarkSetupProps): React.JSX.
         title={translate('settings.tasks.lark.connectTitle', 'Connect a Lark bot')}
         description={translate(
           'settings.tasks.lark.connectDescription',
-          'Point at a bot-only Lark CLI that is already authorized. Orca does not copy the bot credential. New tasks come from @bot messages in the groups below; thread replies stay on the same task.'
+          'Point at a bot-only Lark CLI that is already authorized. Orca does not copy the bot credential. New tasks come from @bot messages in the groups below; thread replies stay on the same task. When work starts and when that turn finishes, Orca replies in the original thread.'
         )}
       >
         <div className="mt-3 space-y-2">

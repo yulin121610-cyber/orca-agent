@@ -10,6 +10,7 @@ import { settleComposerSubmit } from '@/lib/composer-submit-cancellation'
 import { runBackgroundWorktreeCreation } from '@/lib/worktree-creation-flow'
 import type { ComposerCreateHandoff } from '@/lib/composer-create-handoff'
 import { translate } from '@/i18n/i18n'
+import { takeLarkTaskStart } from '@/lib/lark-task-start'
 import { prepareQuickComposerStartup } from './quick-startup-plan'
 import { buildQuickCreationRequest, type QuickSubmitOptions } from './quick-creation-request'
 import type { PendingSmartGitHubSubmitResolution } from './source-selection-decisions'
@@ -172,6 +173,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
       if (isSubmissionCancelled()) {
         return
       }
+      const larkTaskId = takeLarkTaskStart() ?? undefined
       const request = buildQuickCreationRequest({
         repoId,
         ephemeralVmRecipe,
@@ -232,6 +234,7 @@ export function useQuickCreationExecution(input: QuickCreationExecutionInput) {
         note: trimmedNote,
         startupPlan: quickStartup.startupPlan,
         quickPrompt,
+        ...(larkTaskId ? { larkTaskId } : {}),
         launchDraftPrompt: quickDraftPrompt,
         promptDelivery,
         quickTelemetry: quickStartup.telemetry,

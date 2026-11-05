@@ -7,6 +7,7 @@ import { buildAgentStartupPlan } from '../../../../../../shared/agent-launch/sta
 import { tuiAgentToAgentKind } from '@/lib/telemetry'
 import { activateAndRevealFolderWorkspace } from '@/lib/worktree-activation'
 import { shouldApplyWorkspaceSourceAutoName } from '../../../../../../shared/new-workspace/workspace-source'
+import { bindLarkTaskWorkspace, takeLarkTaskStart } from '@/lib/lark-task-start'
 import { folderWorkspaceKey } from '../../../../../../shared/workspace-scope'
 import './folder-workspace-source-repos'
 import {
@@ -177,6 +178,7 @@ export async function submitFolderWorkspaceCreate({
     Boolean(quickAgent) &&
     note.trim().length > 0
 
+  const larkTaskId = takeLarkTaskStart()
   const workspace = await createFolderWorkspace({
     projectGroupId: projectGroup.id,
     name: workspaceName,
@@ -190,6 +192,7 @@ export async function submitFolderWorkspaceCreate({
   if (!workspace) {
     return false
   }
+  await bindLarkTaskWorkspace(larkTaskId ?? undefined, folderWorkspaceKey(workspace.id))
   if (startupPlan && !startupPlan.launchToken) {
     // Share one token so delayed startup delivery reaches exactly the pane it spawned.
     startupPlan.launchToken = createBrowserUuid()

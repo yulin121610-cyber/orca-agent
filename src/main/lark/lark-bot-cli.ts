@@ -5,6 +5,11 @@ import { runProcess, spawnProcess } from '@orca/process-host'
 import { forceTerminateProcessTree } from '@orca/process-host/process-tree-termination'
 import { hostShellEnvironment } from '../runtime/structured-agent-shell-environment'
 import { parseLarkBotIdentity, type LarkBotIdentity } from '../../shared/lark/lark-bot-config'
+import {
+  buildLarkThreadReplyArgs,
+  classifyLarkReplyFailure,
+  type LarkReplyFailure
+} from '../../shared/lark/lark-thread-reply'
 import type { LarkEventSession } from './lark-event-session'
 
 const CLI_ENV_FLAGS = {
@@ -54,6 +59,35 @@ export async function resolveLarkBot(
       'ndjson'
     ])
   })
+}
+
+export async function postLarkThreadReply(args: {
+  program: string
+  messageId: string
+  markdown: string
+  idempotencyKey: string
+  signal?: AbortSignal
+}): Promise<{ status: 'sent' } | { status: LarkReplyFailure }> {
+  await assertBotCli(args.program)
+  const env = { ...(await hostShellEnvironment()), ...CLI_ENV_FLAGS }
+  const result = await runProcess({
+    program: args.program,
+    args: buildLarkThreadReplyArgs({
+      messageId: args.messageId,
+      markdown: args.markdown,
+      idempotencyKey: args.idempotencyKey
+    }),
+    env,
+    signal: args.signal,
+    timeoutMs: 45_000,
+    maxOutputBytes: 256 * 1024,
+    killOnOutputLimit: true,
+    terminationBarrier: true
+  })
+  if (result.code === 0 && !result.timedOut) {
+    return { status: 'sent' }
+  }
+  return { status: classifyLarkReplyFailure(`${result.stdout}\n${result.stderr}`) }
 }
 
 export async function openLarkEventSession(

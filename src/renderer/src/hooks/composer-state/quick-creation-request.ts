@@ -51,6 +51,7 @@ export type QuickCreationRequestInput = {
   note: string
   startupPlan: AgentStartupPlan | null
   quickPrompt: string
+  larkTaskId?: string
   launchDraftPrompt: string | null | undefined
   promptDelivery: 'draft' | 'auto-submit'
   quickTelemetry: AgentStartedTelemetry | null
@@ -124,6 +125,7 @@ export function buildQuickCreationRequest(
     startupPlan: input.startupPlan,
     quickPrompt: input.quickPrompt,
     ...(input.launchDraftPrompt ? { launchDraftPrompt: input.launchDraftPrompt } : {}),
+    ...(input.larkTaskId ? { larkTaskId: input.larkTaskId } : {}),
     promptDelivery: input.promptDelivery,
     quickTelemetry: input.quickTelemetry,
     ...(input.suppressTerminalFocusOnCompletion ? { suppressTerminalFocusOnCompletion: true } : {}),

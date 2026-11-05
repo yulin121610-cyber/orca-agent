@@ -6,6 +6,8 @@ import type { LarkApi } from './lark-api'
 export const larkApi: LarkApi = {
   snapshot: () => ipcRenderer.invoke('lark:snapshot'),
   saveConfig: (config: LarkBotConfig) => ipcRenderer.invoke('lark:saveConfig', config),
+  bindWorkspace: (args: { taskId: string; worktreeId: string }) =>
+    ipcRenderer.invoke('lark:bindWorkspace', args),
   onTasksChanged: (listener) => {
     const wrapped = (): void => listener()
     ipcRenderer.on(LARK_TASKS_CHANGED_CHANNEL, wrapped)
